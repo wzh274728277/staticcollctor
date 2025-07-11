@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信息收集器</title>
+    <title>小红书内容生成器</title>
     <style>
         * {
             margin: 0;
@@ -12,76 +12,118 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .container {
+            max-width: 800px;
+            margin: 0 auto;
             background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 40px 30px;
             text-align: center;
         }
 
-        .title {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
             font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px 30px;
         }
 
         .form-group {
-            margin-bottom: 25px;
-            text-align: left;
+            margin-bottom: 30px;
         }
 
-        .form-label {
+        .form-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
         }
 
-        .form-input {
+        .form-group textarea {
             width: 100%;
+            min-height: 120px;
             padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
             font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
             transition: border-color 0.3s ease;
-            outline: none;
         }
 
-        .form-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .config-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .config-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .config-section input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
         }
 
         .submit-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 1.1em;
             font-weight: 600;
-            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 20px;
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
 
         .submit-btn:active {
@@ -89,41 +131,26 @@
         }
 
         .submit-btn:disabled {
-            background: #ccc;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
-        }
-
-        .message {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: 500;
-            display: none;
-        }
-
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
         }
 
         .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 10px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -131,135 +158,316 @@
             100% { transform: rotate(360deg); }
         }
 
-        .footer {
+        .result-container {
             margin-top: 30px;
-            color: #666;
-            font-size: 14px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 30px;
+        }
+
+        .result-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .generated-text {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 16px;
+        }
+
+        .generated-image {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .generated-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .example-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .example-section h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+        .example-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .example-item:hover {
+            background: #f5f5f5;
+        }
+
+        .example-item strong {
+            color: #1976d2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">信息收集器</h1>
-        
-        <form id="dataForm">
-            <div class="form-group">
-                <label for="keyword" class="form-label">关键词</label>
-                <input 
-                    type="text" 
-                    id="keyword" 
-                    name="keyword" 
-                    class="form-input" 
-                    placeholder="请输入关键词"
-                    required
-                >
+        <div class="header">
+            <h1>✨ 小红书内容生成器</h1>
+            <p>输入您的创意提示词，生成精美的小红书文案和配图</p>
+        </div>
+
+        <div class="form-container">
+            <form id="generatorForm">
+                <div class="config-section">
+                    <h3>⚙️ API 配置</h3>
+                    <input type="url" id="apiUrl" placeholder="请输入您的 n8n webhook URL (例如: https://your-n8n.domain.com/webhook/xiaohongshu-generator)" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="textPrompt">📝 文案生成提示词</label>
+                    <textarea id="textPrompt" placeholder="请输入您想要生成的小红书文案类型，例如：
+写一篇关于咖啡的小红书文案，要求风格轻松活泼，包含咖啡的香味描述和推荐理由，适合年轻人分享..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="svgPrompt">🎨 图片生成提示词</label>
+                    <textarea id="svgPrompt" placeholder="请输入您想要生成的图片描述，例如：
+创建一个温暖的咖啡主题插画，包含咖啡杯、咖啡豆和蒸汽，使用暖色调，风格简约现代，适合小红书分享..." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    🚀 开始生成
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>正在生成您的小红书内容，请稍候...</p>
+                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">这可能需要30-60秒</p>
             </div>
-            
-            <button type="submit" class="submit-btn" id="submitBtn">
-                提交数据
-            </button>
-        </form>
-        
-        <div id="message" class="message"></div>
-        
-        <div class="footer">
-            <p>数据将安全发送到指定服务器</p>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-section">
+                    <h3>📝 生成的文案</h3>
+                    <div class="generated-text" id="generatedText"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>🎨 生成的图片</h3>
+                    <div class="generated-image" id="generatedImage"></div>
+                </div>
+            </div>
+
+            <div class="example-section">
+                <h3>💡 示例提示词</h3>
+                <div class="example-item" onclick="fillExample('coffee')">
+                    <strong>咖啡主题：</strong> 写一篇关于手冲咖啡的小红书文案 | 创建一个温暖的咖啡主题插画
+                </div>
+                <div class="example-item" onclick="fillExample('travel')">
+                    <strong>旅行主题：</strong> 写一篇关于城市旅行的小红书文案 | 设计一个包含地标建筑的旅行插画
+                </div>
+                <div class="example-item" onclick="fillExample('food')">
+                    <strong>美食主题：</strong> 写一篇关于甜品的小红书文案 | 创建一个精美的甜品主题SVG图片
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // webhook服务器地址
-        const WEBHOOK_URL = 'https://n8n-qhuysgqe.sg-members-1.clawcloudrun.com/webhook-test/internal-project';
-        
-        // 获取表单元素
-        const form = document.getElementById('dataForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const messageDiv = document.getElementById('message');
-        const keywordInput = document.getElementById('keyword');
-        
-        // 显示消息函数
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-            
-            // 3秒后自动隐藏消息
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 3000);
-        }
-        
-        // 设置加载状态
-        function setLoading(loading) {
-            if (loading) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="loading"></span>发送中...';
-            } else {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '提交数据';
+        // 示例数据
+        const examples = {
+            coffee: {
+                text: "写一篇关于手冲咖啡的小红书文案，要求风格轻松有趣，包含咖啡的香味描述、冲泡技巧和个人感受，适合咖啡爱好者分享，字数控制在200-300字",
+                svg: "创建一个温暖的咖啡主题插画，包含咖啡杯、咖啡豆、手冲壶和蒸汽，使用棕色和奶油色调，风格简约现代，尺寸800x800像素，适合小红书分享"
+            },
+            travel: {
+                text: "写一篇关于城市旅行的小红书文案，包含景点推荐、美食体验和旅行小贴士，风格要活泼轻松，适合年轻人，字数200-250字",
+                svg: "设计一个包含著名地标建筑、行李箱、飞机和地图元素的旅行主题插画，使用明亮的蓝色和橙色，风格扁平化，尺寸800x800像素"
+            },
+            food: {
+                text: "写一篇关于法式甜品的小红书文案，包含甜品的颜值描述、口感体验和推荐理由，风格要优雅精致，适合甜品爱好者，字数200-280字",
+                svg: "创建一个精美的甜品主题SVG图片，包含马卡龙、蛋糕、草莓和装饰元素，使用粉色和奶油色调，风格可爱精致，尺寸800x800像素"
             }
+        };
+
+        // 填充示例数据
+        function fillExample(type) {
+            const example = examples[type];
+            document.getElementById('textPrompt').value = example.text;
+            document.getElementById('svgPrompt').value = example.svg;
         }
-        
+
         // 表单提交处理
-        form.addEventListener('submit', async (e) => {
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const keyword = keywordInput.value.trim();
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const textPrompt = document.getElementById('textPrompt').value.trim();
+            const svgPrompt = document.getElementById('svgPrompt').value.trim();
             
-            if (!keyword) {
-                showMessage('请输入关键词', 'error');
+            if (!apiUrl || !textPrompt || !svgPrompt) {
+                showError('请填写完整的API URL和提示词');
                 return;
             }
-            
-            setLoading(true);
+
+            // 显示加载状态
+            showLoading();
             
             try {
-                // 准备发送的数据
-                const data = {
-                    keyword: keyword,
-                    timestamp: new Date().toISOString(),
-                    source: 'static-html-form'
-                };
-                
-                // 发送数据到webhook（使用Basic Auth）
-                const username = 'your_username'; // 替换为您的用户名
-                const password = 'your_password'; // 替换为您的密码
-                const basicAuth = btoa(`${username}:${password}`);
-                
-                const response = await fetch(WEBHOOK_URL, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Basic ${basicAuth}`
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        textPrompt: textPrompt,
+                        svgPrompt: svgPrompt
+                    })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误！状态码: ${response.status}`);
+                }
+
+                const result = await response.json();
                 
-                if (response.ok) {
-                    showMessage('数据发送成功！', 'success');
-                    form.reset(); // 清空表单
+                if (result.success) {
+                    showResult(result);
+                    showSuccess('内容生成成功！');
                 } else {
-                    throw new Error(`服务器响应错误: ${response.status}`);
+                    showError(result.message || '生成失败，请重试');
                 }
                 
             } catch (error) {
-                console.error('发送数据时出错:', error);
-                showMessage('发送失败，请稍后重试', 'error');
+                console.error('请求失败:', error);
+                showError(`请求失败: ${error.message}`);
             } finally {
-                setLoading(false);
+                hideLoading();
             }
         });
-        
-        // 页面加载完成后聚焦到输入框
-        window.addEventListener('load', () => {
-            keywordInput.focus();
-        });
-        
-        // 支持回车键提交
-        keywordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                form.dispatchEvent(new Event('submit'));
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('resultContainer').classList.remove('show');
+            clearMessages();
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function showResult(result) {
+            const textElement = document.getElementById('generatedText');
+            const imageElement = document.getElementById('generatedImage');
+            
+            // 显示生成的文案
+            textElement.textContent = result.data.content.text;
+            
+            // 显示生成的图片
+            if (result.data.image.url) {
+                imageElement.innerHTML = `<img src="${result.data.image.url}" alt="生成的图片">`;
+            } else if (result.data.image.svgDataUrl) {
+                imageElement.innerHTML = `<img src="${result.data.image.svgDataUrl}" alt="生成的SVG图片">`;
+            } else {
+                imageElement.innerHTML = '<p>图片生成失败，但文案已生成成功</p>';
             }
+            
+            document.getElementById('resultContainer').classList.add('show');
+        }
+
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.getElementById('generatorForm').appendChild(errorDiv);
+        }
+
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            document.getElementById('generatorForm').appendChild(successDiv);
+        }
+
+        function clearMessages() {
+            const messages = document.querySelectorAll('.error-message, .success-message');
+            messages.forEach(msg => msg.remove());
+        }
+
+        // 页面加载时设置默认API URL（如果有的话）
+        window.addEventListener('load', function() {
+            // 设置默认的webhook URL
+            const defaultApiUrl = 'https://n8n-qhuysgqe.sg-members-1.clawcloudrun.com/webhook/xiaohongshu-generator';
+            document.getElementById('apiUrl').value = defaultApiUrl;
+            document.getElementById('apiUrl').placeholder = `您的 n8n webhook URL`;
         });
     </script>
 </body>
