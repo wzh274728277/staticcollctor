@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书内容生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .config-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .config-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .config-section input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 30px;
+        }
+
+        .result-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .generated-text {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 16px;
+        }
+
+        .generated-image {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .generated-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .example-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .example-section h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+        .example-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .example-item:hover {
+            background: #f5f5f5;
+        }
+
+        .example-item strong {
+            color: #1976d2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ 小红书内容生成器</h1>
+            <p>输入您的创意提示词，生成精美的小红书文案和配图</p>
+        </div>
+
+        <div class="form-container">
+            <form id="generatorForm">
+                <div class="config-section">
+                    <h3>⚙️ API 配置</h3>
+                    <input type="url" id="apiUrl" placeholder="请输入您的 n8n webhook URL (例如: https://your-n8n.domain.com/webhook/xiaohongshu-generator)" required>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" id="useProxy" checked> 
+                            使用代理服务绕过CORS限制 (推荐)
+                        </label>
+                    </div>
+                    <button type="button" id="testApiBtn" style="margin-top: 10px; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        🔍 测试连接
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="textPrompt">📝 文案生成提示词</label>
+                    <textarea id="textPrompt" placeholder="请输入您想要生成的小红书文案类型，例如：
+写一篇关于咖啡的小红书文案，要求风格轻松活泼，包含咖啡的香味描述和推荐理由，适合年轻人分享..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="svgPrompt">🎨 图片生成提示词</label>
+                    <textarea id="svgPrompt" placeholder="请输入您想要生成的图片描述，例如：
+创建一个温暖的咖啡主题插画，包含咖啡杯、咖啡豆和蒸汽，使用暖色调，风格简约现代，适合小红书分享..." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    🚀 开始生成
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>正在生成您的小红书内容，请稍候...</p>
+                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">这可能需要30-60秒</p>
+            </div>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-section">
+                    <h3>📝 生成的文案</h3>
+                    <div class="generated-text" id="generatedText"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>🎨 生成的图片</h3>
+                    <div class="generated-image" id="generatedImage"></div>
+                </div>
+            </div>
+
+            <div class="example-section">
+                <h3>💡 示例提示词</h3>
+                <div class="example-item" onclick="fillExample('coffee')">
+                    <strong>咖啡主题：</strong> 写一篇关于手冲咖啡的小红书文案 | 创建一个温暖的咖啡主题插画
+                </div>
+                <div class="example-item" onclick="fillExample('travel')">
+                    <strong>旅行主题：</strong> 写一篇关于城市旅行的小红书文案 | 设计一个包含地标建筑的旅行插画
+                </div>
+                <div class="example-item" onclick="fillExample('food')">
+                    <strong>美食主题：</strong> 写一篇关于甜品的小红书文案 | 创建一个精美的甜品主题SVG图片
+                </div>
+            </div>
+
+            <div class="example-section" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                <h3>🔧 故障排除</h3>
+                <div style="font-size: 0.9em; line-height: 1.5;">
+                    <p><strong>如果遇到连接失败问题，请尝试以下解决方案：</strong></p>
+                    <ul>
+                        <li><strong>1. 更新n8n工作流：</strong> 确保已部署最新的工作流配置（包含CORS设置）</li>
+                        <li><strong>2. 检查网络连接：</strong> 确保n8n服务正在运行且网络可达</li>
+                        <li><strong>3. 使用测试连接：</strong> 点击"测试连接"按钮检查API状态</li>
+                        <li><strong>4. 查看控制台：</strong> 按F12打开开发者工具查看详细错误信息</li>
+                        <li><strong>5. HTTPS问题：</strong> 确保n8n服务支持HTTPS或使用非安全上下文测试</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 示例数据
+        const examples = {
+            coffee: {
+                text: "写一篇关于手冲咖啡的小红书文案，要求风格轻松有趣，包含咖啡的香味描述、冲泡技巧和个人感受，适合咖啡爱好者分享，字数控制在200-300字",
+                svg: "创建一个温暖的咖啡主题插画，包含咖啡杯、咖啡豆、手冲壶和蒸汽，使用棕色和奶油色调，风格简约现代，尺寸800x800像素，适合小红书分享"
+            },
+            travel: {
+                text: "写一篇关于城市旅行的小红书文案，包含景点推荐、美食体验和旅行小贴士，风格要活泼轻松，适合年轻人，字数200-250字",
+                svg: "设计一个包含著名地标建筑、行李箱、飞机和地图元素的旅行主题插画，使用明亮的蓝色和橙色，风格扁平化，尺寸800x800像素"
+            },
+            food: {
+                text: "写一篇关于法式甜品的小红书文案，包含甜品的颜值描述、口感体验和推荐理由，风格要优雅精致，适合甜品爱好者，字数200-280字",
+                svg: "创建一个精美的甜品主题SVG图片，包含马卡龙、蛋糕、草莓和装饰元素，使用粉色和奶油色调，风格可爱精致，尺寸800x800像素"
+            }
+        };
+
+        // 填充示例数据
+        function fillExample(type) {
+            const example = examples[type];
+            document.getElementById('textPrompt').value = example.text;
+            document.getElementById('svgPrompt').value = example.svg;
+        }
+
+        // 表单提交处理
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const textPrompt = document.getElementById('textPrompt').value.trim();
+            const svgPrompt = document.getElementById('svgPrompt').value.trim();
+            
+            if (!apiUrl || !textPrompt || !svgPrompt) {
+                showError('请填写完整的API URL和提示词');
+                return;
+            }
+
+            // 显示加载状态
+            showLoading();
+            
+            try {
+                // 首先测试API是否可达
+                console.log('正在连接到:', apiUrl);
+                
+                const useProxy = document.getElementById('useProxy').checked;
+                let response = null;
+                
+                if (useProxy) {
+                    // 使用代理服务绕过CORS限制
+                    const proxyServices = [
+                        'https://api.allorigins.win/raw?url=',
+                        'https://cors-anywhere.herokuapp.com/',
+                        'https://api.codetabs.com/v1/proxy?quest='
+                    ];
+                    
+                    let lastError = null;
+                    
+                    // 尝试多个代理服务
+                    for (let i = 0; i < proxyServices.length; i++) {
+                        try {
+                            const proxyUrl = proxyServices[i] + encodeURIComponent(apiUrl);
+                            console.log(`尝试代理服务 ${i + 1}:`, proxyUrl);
+                            
+                            response = await fetch(proxyUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    textPrompt: textPrompt,
+                                    svgPrompt: svgPrompt
+                                }),
+                                signal: AbortSignal.timeout(120000)
+                            });
+                            
+                            if (response.ok) {
+                                console.log(`代理服务 ${i + 1} 成功`);
+                                break;
+                            } else {
+                                console.log(`代理服务 ${i + 1} 失败，状态码:`, response.status);
+                                lastError = new Error(`代理服务返回错误: ${response.status}`);
+                            }
+                        } catch (error) {
+                            console.log(`代理服务 ${i + 1} 出错:`, error.message);
+                            lastError = error;
+                            continue;
+                        }
+                    }
+                    
+                    if (!response || !response.ok) {
+                        throw lastError || new Error('所有代理服务都失败了');
+                    }
+                } else {
+                    // 直接请求（可能遇到CORS问题）
+                    console.log('直接请求API（不使用代理）');
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            textPrompt: textPrompt,
+                            svgPrompt: svgPrompt
+                        }),
+                        signal: AbortSignal.timeout(120000)
+                    });
+                }
+
+                console.log('响应状态:', response.status);
+                console.log('响应头:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('服务器返回错误:', errorText);
+                    throw new Error(`HTTP错误！状态码: ${response.status}, 详情: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('解析成功，结果:', result);
+                
+                if (result.success) {
+                    showResult(result);
+                    showSuccess('内容生成成功！');
+                } else {
+                    showError(result.message || '生成失败，请重试');
+                }
+                
+            } catch (error) {
+                console.error('请求失败:', error);
+                let errorMessage = '请求失败: ';
+                
+                if (error.name === 'TimeoutError') {
+                    errorMessage += '请求超时，请稍后重试';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage += '网络连接失败，可能的原因：\n1. CORS跨域问题\n2. 网络连接问题\n3. API服务不可用';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showError(errorMessage);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('resultContainer').classList.remove('show');
+            clearMessages();
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function showResult(result) {
+            const textElement = document.getElementById('generatedText');
+            const imageElement = document.getElementById('generatedImage');
+            
+            // 显示生成的文案
+            textElement.textContent = result.data.content.text;
+            
+            // 显示生成的图片
+            if (result.data.image.url) {
+                imageElement.innerHTML = `<img src="${result.data.image.url}" alt="生成的图片">`;
+            } else if (result.data.image.svgDataUrl) {
+                imageElement.innerHTML = `<img src="${result.data.image.svgDataUrl}" alt="生成的SVG图片">`;
+            } else {
+                imageElement.innerHTML = '<p>图片生成失败，但文案已生成成功</p>';
+            }
+            
+            document.getElementById('resultContainer').classList.add('show');
+        }
+
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.getElementById('generatorForm').appendChild(errorDiv);
+        }
+
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            document.getElementById('generatorForm').appendChild(successDiv);
+        }
+
+        function clearMessages() {
+            const messages = document.querySelectorAll('.error-message, .success-message');
+            messages.forEach(msg => msg.remove());
+        }
+
+        // 测试API连接
+        document.getElementById('testApiBtn').addEventListener('click', async function() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            
+            if (!apiUrl) {
+                showError('请先输入API URL');
+                return;
+            }
+            
+            const testBtn = document.getElementById('testApiBtn');
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            clearMessages();
+            
+            try {
+                console.log('测试连接:', apiUrl);
+                
+                const useProxy = document.getElementById('useProxy').checked;
+                let response = null;
+                
+                if (useProxy) {
+                    // 使用代理服务测试
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl);
+                    console.log('使用代理测试:', proxyUrl);
+                    
+                    response = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            textPrompt: '测试连接',
+                            svgPrompt: '测试连接'
+                        }),
+                        signal: AbortSignal.timeout(10000) // 10秒超时
+                    });
+                } else {
+                    // 直接测试
+                    console.log('直接测试连接');
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            textPrompt: '测试连接',
+                            svgPrompt: '测试连接'
+                        }),
+                        signal: AbortSignal.timeout(10000) // 10秒超时
+                    });
+                }
+                
+                console.log('测试响应状态:', response.status);
+                console.log('测试响应头:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    showSuccess('✅ API连接成功！可以正常使用');
+                } else {
+                    const errorText = await response.text();
+                    showError(`❌ API连接失败: ${response.status} - ${errorText}`);
+                }
+                
+            } catch (error) {
+                console.error('测试连接失败:', error);
+                let errorMessage = '❌ 连接测试失败: ';
+                
+                if (error.name === 'TimeoutError') {
+                    errorMessage += '请求超时，服务器可能不可用';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage += 'CORS跨域问题或网络连接失败';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showError(errorMessage);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🔍 测试连接';
+            }
+        });
+
+        // 页面加载时设置默认API URL（如果有的话）
+        window.addEventListener('load', function() {
+            // 设置默认的webhook URL
+            const defaultApiUrl = 'https://n8n-qhuysgqe.sg-members-1.clawcloudrun.com/webhook/xiaohongshu-generator';
+            document.getElementById('apiUrl').value = defaultApiUrl;
+            document.getElementById('apiUrl').placeholder = `您的 n8n webhook URL`;
+        });
+    </script>
+</body>
+</html> 
