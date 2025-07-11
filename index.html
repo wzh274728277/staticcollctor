@@ -285,6 +285,9 @@
                 <div class="config-section">
                     <h3>⚙️ API 配置</h3>
                     <input type="url" id="apiUrl" placeholder="请输入您的 n8n webhook URL (例如: https://your-n8n.domain.com/webhook/xiaohongshu-generator)" required>
+                    <button type="button" id="testApiBtn" style="margin-top: 10px; padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        🔍 测试连接
+                    </button>
                 </div>
 
                 <div class="form-group">
@@ -334,6 +337,20 @@
                     <strong>美食主题：</strong> 写一篇关于甜品的小红书文案 | 创建一个精美的甜品主题SVG图片
                 </div>
             </div>
+
+            <div class="example-section" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                <h3>🔧 故障排除</h3>
+                <div style="font-size: 0.9em; line-height: 1.5;">
+                    <p><strong>如果遇到连接失败问题，请尝试以下解决方案：</strong></p>
+                    <ul>
+                        <li><strong>1. 更新n8n工作流：</strong> 确保已部署最新的工作流配置（包含CORS设置）</li>
+                        <li><strong>2. 检查网络连接：</strong> 确保n8n服务正在运行且网络可达</li>
+                        <li><strong>3. 使用测试连接：</strong> 点击"测试连接"按钮检查API状态</li>
+                        <li><strong>4. 查看控制台：</strong> 按F12打开开发者工具查看详细错误信息</li>
+                        <li><strong>5. HTTPS问题：</strong> 确保n8n服务支持HTTPS或使用非安全上下文测试</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -378,6 +395,9 @@
             showLoading();
             
             try {
+                // 首先测试API是否可达
+                console.log('正在连接到:', apiUrl);
+                
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -386,14 +406,22 @@
                     body: JSON.stringify({
                         textPrompt: textPrompt,
                         svgPrompt: svgPrompt
-                    })
+                    }),
+                    // 添加超时处理
+                    signal: AbortSignal.timeout(120000) // 2分钟超时
                 });
 
+                console.log('响应状态:', response.status);
+                console.log('响应头:', [...response.headers.entries()]);
+
                 if (!response.ok) {
-                    throw new Error(`HTTP错误！状态码: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('服务器返回错误:', errorText);
+                    throw new Error(`HTTP错误！状态码: ${response.status}, 详情: ${errorText}`);
                 }
 
                 const result = await response.json();
+                console.log('解析成功，结果:', result);
                 
                 if (result.success) {
                     showResult(result);
@@ -404,7 +432,17 @@
                 
             } catch (error) {
                 console.error('请求失败:', error);
-                showError(`请求失败: ${error.message}`);
+                let errorMessage = '请求失败: ';
+                
+                if (error.name === 'TimeoutError') {
+                    errorMessage += '请求超时，请稍后重试';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage += '网络连接失败，可能的原因：\n1. CORS跨域问题\n2. 网络连接问题\n3. API服务不可用';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showError(errorMessage);
             } finally {
                 hideLoading();
             }
@@ -461,6 +499,65 @@
             const messages = document.querySelectorAll('.error-message, .success-message');
             messages.forEach(msg => msg.remove());
         }
+
+        // 测试API连接
+        document.getElementById('testApiBtn').addEventListener('click', async function() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            
+            if (!apiUrl) {
+                showError('请先输入API URL');
+                return;
+            }
+            
+            const testBtn = document.getElementById('testApiBtn');
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            clearMessages();
+            
+            try {
+                console.log('测试连接:', apiUrl);
+                
+                // 发送一个简单的测试请求
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        textPrompt: '测试连接',
+                        svgPrompt: '测试连接'
+                    }),
+                    signal: AbortSignal.timeout(10000) // 10秒超时
+                });
+                
+                console.log('测试响应状态:', response.status);
+                console.log('测试响应头:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    showSuccess('✅ API连接成功！可以正常使用');
+                } else {
+                    const errorText = await response.text();
+                    showError(`❌ API连接失败: ${response.status} - ${errorText}`);
+                }
+                
+            } catch (error) {
+                console.error('测试连接失败:', error);
+                let errorMessage = '❌ 连接测试失败: ';
+                
+                if (error.name === 'TimeoutError') {
+                    errorMessage += '请求超时，服务器可能不可用';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage += 'CORS跨域问题或网络连接失败';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showError(errorMessage);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🔍 测试连接';
+            }
+        });
 
         // 页面加载时设置默认API URL（如果有的话）
         window.addEventListener('load', function() {
